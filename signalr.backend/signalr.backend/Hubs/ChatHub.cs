@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Threading.Channels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using signalr.backend.Data;
 using signalr.backend.Models;
+using Channel = signalr.backend.Models.Channel;
 
 namespace signalr.backend.Hubs
 {
@@ -75,6 +77,7 @@ namespace signalr.backend.Hubs
             ReduireNbConnexions();
 
             // TODO: Envoyer un message aux clients pour les mettre à jour
+            await Clients.All.SendAsync("UsersList", UserHandler.UserConnections.ToList());
         }
 
         public async Task CreateChannel(string title)
@@ -133,10 +136,14 @@ namespace signalr.backend.Hubs
             if (userId != null)
             {
                 // TODO: Envoyer le message à cet utilisateur
+                await Clients.User(userId).SendAsync("NewMessage", "[De: " + CurentUser.Email! + "] " + message);
             }
             else if (channelId != 0)
             {
                 // TODO: Envoyer le message aux utilisateurs connectés à ce canal
+                string groupName = CreateChannelGroupName(channelId);
+                Channel channel = _context.Channel.Find(channelId);
+                await Clients.Group(groupName).SendAsync("NewMessage", "[" + channel.Title + "] " + message);
             }
             else
             {
