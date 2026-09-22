@@ -36,8 +36,15 @@ export default function ChatComponent({ hubConnection, onConnected }: ChatCompon
     });
 
     // TODO: Écouter le message pour mettre à jour la liste de channels
+    hubConnection.on("ChannelsList", (data) =>{
+      setChannelsList(data);
+    });
+
 
     // TODO: Écouter le message pour quitter un channel (lorsque le channel est effacé)
+    hubConnection.on("LeaveChannel", (message) =>{
+      setSelectedChannel(null);
+    });
 
     // Tous les handlers sont enregistrés : on peut maintenant démarrer la connexion.
     if (hubConnection.state === HubConnectionState.Disconnected) {
@@ -84,11 +91,13 @@ export default function ChatComponent({ hubConnection, onConnected }: ChatCompon
   function createChannel(e: React.FormEvent) {
     e.preventDefault();
     // TODO: Ajouter un invoke pour créer un canal
+    hubConnection?.invoke("CreateChannel", newChannelName);
     setNewChannelName('');
   }
 
   function deleteChannel(channel: Channel) {
     // TODO: Ajouter un invoke pour supprimer un canal
+    hubConnection?.invoke("DeleteChannel", channel.id);
   }
 
   function leaveChannel() {
